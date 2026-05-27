@@ -85,10 +85,13 @@ if __name__ == "__main__":
     questions = load_jsonl(DATA_DIR / "guessdev.jsonl")
     print(f"Dev set: {len(questions)} questions\n")
 
-    # --- Retrieval eval (full dev set) ---
-    print("=== Retrieval Accuracy (BM25) ===")
+    # Sample 200 for faster retrieval eval
+    sample_200 = random.sample(questions, min(200, len(questions)))
+
+    # --- Retrieval eval (sampled) ---
+    print("=== Retrieval Accuracy (BM25, sample n=200) ===")
     t0 = time.time()
-    ret_results = eval_retrieval(questions)
+    ret_results = eval_retrieval(sample_200)
     print(f"  acc@1 : {ret_results['acc@1']:.3f}")
     print(f"  acc@5 : {ret_results['acc@5']:.3f}")
     print(f"  n     : {ret_results['n']}")
