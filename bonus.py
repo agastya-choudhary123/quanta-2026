@@ -53,12 +53,16 @@ def answer_bonus(
     leadin: str,
     part: str,
     images: Optional[list] = None,
+    use_hybrid: bool = True,
 ) -> dict:
     """
     Answer one bonus part. Returns {answer, confidence, explanation}.
     """
     from mlx_vlm.prompt_utils import apply_chat_template
-    from retrieval import retrieve
+    if use_hybrid:
+        from retrieval_hybrid import hybrid_retrieve as retrieve
+    else:
+        from retrieval import retrieve
 
     combined_query = f"{leadin} {part}"
     hits = retrieve(combined_query, top_k=5)

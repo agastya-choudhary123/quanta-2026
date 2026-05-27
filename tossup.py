@@ -89,12 +89,16 @@ def answer_tossup(
     question_text: str,
     images: Optional[list] = None,
     state: Optional[TossupState] = None,
+    use_hybrid: bool = True,
 ) -> dict:
     """
     Process one tossup update. Call repeatedly as more text is revealed.
     Returns: {answer, buzz, confidence}
     """
-    from retrieval import retrieve
+    if use_hybrid:
+        from retrieval_hybrid import hybrid_retrieve as retrieve
+    else:
+        from retrieval import retrieve
 
     word_count = len(question_text.split())
 
