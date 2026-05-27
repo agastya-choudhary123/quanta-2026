@@ -24,10 +24,12 @@ ROOT = Path(__file__).parent
 MODEL_PATH = ROOT / "models" / "smolvlm-256m-mlx"
 
 # Buzz threshold: commit when confidence exceeds this
-BUZZ_THRESHOLD = 0.72
+# Tuned on dev set to optimize precision/recall tradeoff
+BUZZ_THRESHOLD = 0.70
 
 # How many words minimum before we consider buzzing
-MIN_WORDS_TO_BUZZ = 15
+# Lower = more aggressive buzzing (earlier), higher = more conservative (later)
+MIN_WORDS_TO_BUZZ = 20
 
 
 @lru_cache(maxsize=1)
