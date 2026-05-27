@@ -1,0 +1,19 @@
+# Model weights (too large for git)
+models/
+data/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Rust build artifacts
+rust/*/target/
+
+# macOS
+.DS_Store
+.claude/
