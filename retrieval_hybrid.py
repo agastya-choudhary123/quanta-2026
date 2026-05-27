@@ -26,48 +26,57 @@ def _normalize_scores(scores: list[float]) -> list[float]:
 def hybrid_retrieve(
     query: str,
     top_k: int = 5,
-    bm25_weight: float = 0.5,
-    dense_weight: float = 0.5,
+    bm25_weight: float = 0.6,
+    dense_weight: float = 0.4,
 ) -> list[tuple[str, float]]:
     """
     Retrieve top-k answers using hybrid BM25 + dense ranking.
 
+    Strategy: retrieve from both sources, rerank by weighted combination.
+    BM25 is lexical (better for exact matches), dense is semantic.
+    Weights: 60% BM25, 40% dense (BM25 is stronger signal for quiz bowl).
+
     Args:
       query: search string
       top_k: number of results to return
-      bm25_weight: weight of BM25 score (0-1)
-      dense_weight: weight of dense score (0-1)
+      bm25_weight: weight of BM25 score
+      dense_weight: weight of dense score
 
     Returns:
       list of (answer, combined_score) tuples, sorted by score desc
     """
-    # Retrieve from both sources (get top 2*k to ensure good coverage)
-    bm25_results = bm25_retrieve(query, top_k=2 * top_k)
-    dense_results = dense_retrieve(query, top_k=2 * top_k)
+    # Retrieve from both sources
+    bm25_results = bm25_retrieve(query, top_k=10)
+    dense_results = dense_retrieve(query, top_k=10)
 
-    # Build answer → score dicts
-    bm25_dict = {ans: score for ans, score in bm25_results}
-    dense_dict = {ans: score for ans, score in dense_results}
+    # Collect all unique answers with their scores
+    all_scores = {}
 
-    # Combine results: use both as sources of truth
-    all_answers = set(bm25_dict.keys()) | set(dense_dict.keys())
+    for ans, score in bm25_results:
+        all_scores[ans] = {"bm25": score, "dense": 0.0}
 
-    # Score each answer as weighted blend of BM25 + dense scores
-    scores = {}
-    for ans in all_answers:
-        bm25_score = bm25_dict.get(ans, 0.0)
-        dense_score = dense_dict.get(ans, 0.0)
+    for ans, score in dense_results:
+        if ans not in all_scores:
+            all_scores[ans] = {"bm25": 0.0, "dense": 0.0}
+        all_scores[ans]["dense"] = score
 
-        # Normalize each score to [0, 1] range
-        # BM25 is already ~0-50, dense is ~0-1 (cosine sim)
-        bm25_norm = min(bm25_score / 30.0, 1.0)
-        dense_norm = min(dense_score, 1.0)
+    # Normalize scores to [0, 1] using min-max within retrieved sets
+    bm25_scores = [s["bm25"] for s in all_scores.values()]
+    dense_scores = [s["dense"] for s in all_scores.values()]
 
-        combined = bm25_weight * bm25_norm + dense_weight * dense_norm
-        scores[ans] = combined
+    bm25_max = max(bm25_scores) if bm25_scores else 1.0
+    dense_max = max(dense_scores) if dense_scores else 1.0
+
+    # Combine with normalization
+    combined = {}
+    for ans, scores_dict in all_scores.items():
+        bm25_norm = scores_dict["bm25"] / bm25_max if bm25_max > 0 else 0.0
+        dense_norm = scores_dict["dense"] / dense_max if dense_max > 0 else 0.0
+
+        combined[ans] = bm25_weight * bm25_norm + dense_weight * dense_norm
 
     # Sort and return top-k
-    sorted_results = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+    sorted_results = sorted(combined.items(), key=lambda x: x[1], reverse=True)
     return sorted_results[:top_k]
 
 

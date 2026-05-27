@@ -36,7 +36,9 @@ def _load_embeddings() -> tuple[np.ndarray, list[str]]:
 def encode_query(query: str) -> np.ndarray:
     """Encode query to 384-dim embedding."""
     model = _load_model()
-    return model.encode(query, convert_to_numpy=True)
+    emb = model.encode(query, convert_to_numpy=True)
+    # Normalize to unit length for cosine similarity
+    return emb / (np.linalg.norm(emb) + 1e-8)
 
 
 def dense_retrieve(query: str, top_k: int = 5) -> list[tuple[str, float]]:

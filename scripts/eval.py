@@ -29,11 +29,8 @@ def normalize(s: str) -> str:
     return s.strip().lower().replace("_", " ").replace("-", " ")
 
 
-def eval_retrieval(questions: list[dict], use_hybrid: bool = False) -> dict:
-    if use_hybrid:
-        from retrieval_hybrid import hybrid_retrieve as retrieve
-    else:
-        from retrieval import retrieve
+def eval_retrieval(questions: list[dict]) -> dict:
+    from retrieval import retrieve
     hit1 = hit5 = 0
     for q in questions:
         gold = normalize(q.get("page") or q.get("answer", ""))
@@ -88,22 +85,13 @@ if __name__ == "__main__":
     questions = load_jsonl(DATA_DIR / "guessdev.jsonl")
     print(f"Dev set: {len(questions)} questions\n")
 
-    # --- Retrieval eval (full dev set, fast) ---
+    # --- Retrieval eval (full dev set) ---
     print("=== Retrieval Accuracy (BM25) ===")
     t0 = time.time()
-    ret_results = eval_retrieval(questions, use_hybrid=False)
+    ret_results = eval_retrieval(questions)
     print(f"  acc@1 : {ret_results['acc@1']:.3f}")
     print(f"  acc@5 : {ret_results['acc@5']:.3f}")
     print(f"  n     : {ret_results['n']}")
-    print(f"  time  : {time.time()-t0:.1f}s\n")
-
-    # --- Hybrid retrieval eval ---
-    print("=== Retrieval Accuracy (BM25 + Dense Hybrid) ===")
-    t0 = time.time()
-    hybrid_results = eval_retrieval(questions, use_hybrid=True)
-    print(f"  acc@1 : {hybrid_results['acc@1']:.3f}")
-    print(f"  acc@5 : {hybrid_results['acc@5']:.3f}")
-    print(f"  n     : {hybrid_results['n']}")
     print(f"  time  : {time.time()-t0:.1f}s\n")
 
     # --- Full pipeline eval (sampled) ---
