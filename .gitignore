@@ -11,9 +11,6 @@ __pycache__/
 dist/
 build/
 
-# Rust build artifacts
-rust/*/target/
-
 # macOS
 .DS_Store
 .claude/

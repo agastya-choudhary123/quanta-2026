@@ -15,7 +15,7 @@ Output:
 """
 from __future__ import annotations
 
-import re
+import math
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
@@ -43,8 +43,6 @@ def _generate(prompt: str, max_tokens: int = 60) -> tuple[str, float]:
     lp = np.array(result.logprobs.tolist(), dtype=np.float32)
     gen_lp = lp[lp > -50]
     mean_lp = float(np.mean(gen_lp)) if len(gen_lp) > 0 else -5.0
-    # Confidence: higher mean logprob = more confident
-    import math
     conf = float(1.0 / (1.0 + math.exp(mean_lp + 2.5)))
     return result.text.strip(), conf
 
@@ -53,16 +51,12 @@ def answer_bonus(
     leadin: str,
     part: str,
     images: Optional[list] = None,
-    use_hybrid: bool = True,
 ) -> dict:
     """
     Answer one bonus part. Returns {answer, confidence, explanation}.
     """
     from mlx_vlm.prompt_utils import apply_chat_template
-    if use_hybrid:
-        from retrieval_hybrid import hybrid_retrieve as retrieve
-    else:
-        from retrieval import retrieve
+    from retrieval import retrieve
 
     combined_query = f"{leadin} {part}"
     hits = retrieve(combined_query, top_k=5)

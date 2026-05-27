@@ -18,7 +18,6 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-import mlx.core as mx
 import numpy as np
 
 ROOT = Path(__file__).parent
@@ -89,16 +88,12 @@ def answer_tossup(
     question_text: str,
     images: Optional[list] = None,
     state: Optional[TossupState] = None,
-    use_hybrid: bool = True,
 ) -> dict:
     """
     Process one tossup update. Call repeatedly as more text is revealed.
     Returns: {answer, buzz, confidence}
     """
-    if use_hybrid:
-        from retrieval_hybrid import hybrid_retrieve as retrieve
-    else:
-        from retrieval import retrieve
+    from retrieval import retrieve
 
     word_count = len(question_text.split())
 
